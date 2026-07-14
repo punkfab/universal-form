@@ -10,12 +10,13 @@ degrees of freedom, where they live, and why. It is the **source of truth** for 
 decisions; sibling projects consume the resulting kinematic budgets by reference rather than
 re-deriving them. See [BRIEF.md](./BRIEF.md) for the why.
 
-> **Status: first code slice landed.** The kinematic chain and its **closed-form IK** are real and
+> **Status: kinematics + interactive sim landed.** The chain and its **closed-form IK** are real and
 > `make check`-green: `ik-check` proves `FK∘IK = identity` to ~5e-14 over 20k random configs (all 8
-> solution branches, none missed), and `reach-check` proves "base delivers, arm settles" — a mobile
-> form solves 100% of in-envelope room targets vs ~1% for a bolted-down arm, and reports its honest
-> 1.43 m vertical ceiling. The bracing / whole-body claims below are still *argument* (see
-> [Roadmap](#roadmap)). Reasoning comes first here on purpose; then it becomes a gate.
+> branches, none missed), and `reach-check` proves "base delivers, arm settles" — a mobile form
+> solves 100% of in-envelope room targets vs ~1% for a bolted-down arm, at an honest 1.43 m vertical
+> ceiling. **`make sim`** is an interactive MuJoCo viewer where the whole form chases a hand-moved
+> target via that IK (the target reddens past the ceiling). The bracing / contact-rich claims below
+> are still *argument* (see [Roadmap](#roadmap)). Reasoning comes first here; then it becomes a gate.
 
 ## The thesis
 
@@ -136,19 +137,35 @@ that cost nothing extra.
 ## Setup
 
 ```bash
-uv sync            # or: pip install numpy
+uv sync                 # kinematics only (pure numpy)
+uv sync --extra sim     # + mujoco / imageio / matplotlib for the interactive sim
 ```
 
-Pure-numpy; no CAD or sim deps for the kinematics gates. The Makefile runs `python3` with
-`PYTHONPATH=.` (override with `make PY=... check`).
+The kinematics gates are pure-numpy. The Makefile runs `python3` with `PYTHONPATH=.` (override
+with `make PY=... check`).
 
 ## Gates
 
 ```bash
-make check        # every hardware-free gate (ik-check + reach-check)
-make ik-check     # closed-form IK exactly inverts FK (FK∘IK = identity to ~5e-14, all 8 branches)
-make reach-check  # base+lift deliver reach the arm alone cannot; honest vertical ceiling
+make check         # every hardware-free gate (ik-check + reach-check + sim-selftest)
+make ik-check      # closed-form IK exactly inverts FK (FK∘IK = identity to ~5e-14, all 8 branches)
+make reach-check   # base+lift deliver reach the arm alone cannot; honest vertical ceiling
+make sim-selftest  # MuJoCo model matches the kinematics chain (TCP == FK to ~5e-14), no window
 ```
+
+## Interactive sim
+
+```bash
+make sim           # MuJoCo viewer: WASD/RF (or ctrl-drag) move a target; the whole form's
+                   #   closed-form IK drives base + lift + arm to reach it. Drag it above the
+                   #   1.43 m ceiling and it turns RED -- the vertical-reach anisotropy, felt.
+make sim-demo      # headless scripted sweep -> build/form_sim.gif (+ key stills)
+```
+
+The MJCF is *derived* from the `kinematics` package (link lengths, lift travel, mounts — never
+re-typed), and built joint-for-joint to match the FK, so MuJoCo's TCP equals `form.fk(...)` to
+~5e-14. Contacts are off here — this sim answers *reachability*; the contact-rich whole-body /
+bracing sim is the next roadmap item.
 
 ## Roadmap
 
@@ -158,14 +175,17 @@ Turning the argument into gates you can run:
   base+lift chain as parametric code (`kinematics/`), with `make ik-check` proving `FK∘IK` to ~5e-14.
 - ✅ **Workspace + base/lift redundancy** — `make reach-check`: mobile form vs bolted arm, honest
   in/out-of-shell classification, measured vertical ceiling. *(Still open below: the 7th-DOF knee.)*
+- ✅ **Interactive MuJoCo sim** — `make sim`: the whole form tracks a hand-moved target via its own
+  closed-form IK; the target turns red past the vertical ceiling. MJCF derived from the chain
+  (`sim-selftest`: MuJoCo TCP == FK to ~5e-14). Reachability only — contacts off.
 - ⬜ **The redundancy knee** — promote the arm to 7-DOF and measure what the extra joint buys
   (obstacle/singularity escape) vs resolving it in the base's null space. The open question, made
   empirical.
 - ⬜ **Bracing affordance study** — what a torso/forearm/base surface must be (geometry, compliance,
   friction, sensing) to be a trustworthy anvil, and whether a contact-recruiting policy is harder
   than dual-arm coordination or just differently hard.
-- ⬜ **MuJoCo whole-body** — the form as a contact-rich body; test the base-delivers/arm-settles and
-  brace-instead-of-second-arm claims against a real task distribution.
+- ⬜ **Contact-rich whole-body sim** — turn contacts *on* in the sim: the form as a colliding body
+  that presses objects into anvils; test the brace-instead-of-second-arm claim on real tasks.
 
 ## Open questions
 
@@ -186,7 +206,8 @@ kinematics/   # the chain as parametric code
 scripts/      # one gate per claim
               #   ik_check.py    -- FK∘IK = identity to ~5e-14, all 8 branches, reachability honest
               #   reach_check.py -- mobile form vs bolted arm; measured vertical ceiling
-sim/          # (coming) MuJoCo whole-body contact-rich tests
+sim/          # form_sim.py -- interactive MuJoCo; MJCF derived from the chain. three modes:
+              #   (default) glfw viewer | --demo osmesa gif | --selftest headless assert
 parts/        # (coming) build123d CAD for the form's geometry (lift column, bracing surfaces, wrist)
 ```
 

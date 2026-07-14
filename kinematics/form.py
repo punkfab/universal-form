@@ -21,7 +21,7 @@ from dataclasses import dataclass, field
 import numpy as np
 
 from .arm import Arm
-from .se3 import frame_from_x, rot_z, se3
+from .se3 import frame_from_x, rot_z, se3, wrap
 
 
 @dataclass(frozen=True)
@@ -59,12 +59,14 @@ class UniversalForm:
         # wc_z tops out at shoulder_top + reach_max; TCP = wc + Lt*approach, so TCP_z = wc_z + Lt*a_z.
         return shoulder_top + self.arm.reach_max + self.arm.Lt * a[2]
 
-    def place_for(self, target, approach=(0.0, 0.0, -1.0), dh_frac: float = 0.45):
+    def place_for(self, target, approach=(0.0, 0.0, -1.0), dh_frac: float = 0.45, q_ref=None):
         """Park the base+lift so `target` is comfortably inside the arm's shell, then IK.
 
         `target`     : world xyz the TCP should reach.
         `approach`   : desired tool direction (tool reaches along its local x). Default: reach
                        straight down onto the target, the common table-pick case.
+        `q_ref`      : if given, pick the arm IK branch nearest these joints (continuity when
+                       tracking a moving target); otherwise the first branch.
         Returns (base=(x,y,yaw), lift, q_arm) or None -- None means the target is genuinely
         outside the form's envelope (above `vertical_ceiling`), the honest anisotropy limit.
         """
@@ -109,4 +111,6 @@ class UniversalForm:
         sols = self.arm.ik(pose_in_shoulder)
         if not sols:
             return None
+        if q_ref is not None:
+            sols.sort(key=lambda s: float(np.max(np.abs(wrap(s - np.asarray(q_ref, float))))))
         return base, lift, sols[0]

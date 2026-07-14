@@ -8,8 +8,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# The whole-body contact-rich sim (arrives with sim/).
-sim = ["mujoco>=3"]
+# The interactive MuJoCo sim (sim/form_sim.py). imageio writes the demo gif; matplotlib is
+# optional (the tracking plot is skipped if it's absent).
+sim = ["mujoco>=3", "imageio>=2", "matplotlib>=3"]
 
 [tool.uv]
 package = false

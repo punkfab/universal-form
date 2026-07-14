@@ -41,5 +41,7 @@
   missed, reachability honest).
 - ✅ **Workspace + base/lift redundancy** — `make reach-check`: the mobile form solves 100% of
   in-envelope room targets vs ~1% for a bolted arm, and reports its honest 1.43 m vertical ceiling.
+- ✅ **Interactive MuJoCo sim** — `make sim` (`sim/form_sim.py`): whole-body IK tracks a hand-moved
+  target; MJCF derived from the chain (`make sim-selftest`: MuJoCo TCP == FK to ~5e-14). Contacts off.
 - ⬜ **The redundancy knee** — promote the arm to 7-DOF and measure what the extra joint buys.
-- ⬜ **Bracing affordance study** + **MuJoCo whole-body** — test brace-instead-of-second-arm.
+- ⬜ **Contact-rich whole-body** — turn contacts on; test brace-instead-of-second-arm.
