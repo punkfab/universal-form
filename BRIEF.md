@@ -36,6 +36,10 @@
 
 - ✅ **Design thesis** written and public: the minimal DOF budget, the function-vs-substrate test,
   and the bracing-over-bimanuality stance are argued end-to-end in `README.md`.
-- ⬜ **Kinematic model + closed-form IK** (spherical-wrist decoupling) — first code slice, first gate.
-- ⬜ **Reachability sim** — find the redundancy knee empirically.
+- ✅ **Kinematic model + closed-form IK** (spherical-wrist decoupling) — `kinematics/` + `make
+  ik-check`, proving `FK∘IK = identity` to ~5e-14 over 20k random configs (all 8 branches, none
+  missed, reachability honest).
+- ✅ **Workspace + base/lift redundancy** — `make reach-check`: the mobile form solves 100% of
+  in-envelope room targets vs ~1% for a bolted arm, and reports its honest 1.43 m vertical ceiling.
+- ⬜ **The redundancy knee** — promote the arm to 7-DOF and measure what the extra joint buys.
 - ⬜ **Bracing affordance study** + **MuJoCo whole-body** — test brace-instead-of-second-arm.
