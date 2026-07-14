@@ -1,0 +1,17 @@
+# generated artifacts
+exports/*
+!exports/.gitkeep
+build/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+uv.lock
+
+# os / editor
+.DS_Store
+*.swp
